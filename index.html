@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL to QR Code Converter</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="lang-switcher">
+                <label for="langSelect" class="sr-only" id="langLabel">Language</label>
+                <select id="langSelect" aria-label="Language">
+                    <option value="en">English</option>
+                    <option value="zh">简体中文</option>
+                </select>
+            </div>
+            <h1 class="title">
+                <span class="icon">🔗</span>
+                <span id="titleText">URL to QR Code Converter</span>
+            </h1>
+            <p class="subtitle" id="subtitleText">Convert any web URL into a scannable QR code instantly</p>
+        </header>
+
+        <main class="main">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="urlInput" class="input-label" id="urlLabel">Enter Website URL</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="url" 
+                            id="urlInput" 
+                            class="url-input" 
+                            placeholder="https://example.com"
+                            autocomplete="off"
+                        >
+                        <button id="generateBtn" class="generate-btn" disabled>
+                            <span class="btn-text">Loading QR Library...</span>
+                        </button>
+                    </div>
+                    <div class="options-section" aria-label="QR options">
+                        <div class="option-group">
+                            <label for="sizeInput" id="sizeLabel">Size</label>
+                            <input type="range" id="sizeInput" min="128" max="512" step="16" value="256">
+                            <span id="sizeValue" class="option-value">256 px</span>
+                        </div>
+                        <div class="option-row colors-row">
+                            <div class="option-group">
+                                <label for="colorDarkInput" id="qrColorLabel">QR Code Color</label>
+                                <input type="color" id="colorDarkInput" value="#000000">
+                            </div>
+                            <div class="option-group">
+                                <label for="colorLightInput" id="bgColorLabel">Background Color</label>
+                                <input type="color" id="colorLightInput" value="#FFFFFF">
+                            </div>
+                        </div>
+                        <div class="option-group">
+                            <label for="eccLevelSelect" id="eccLabel">Error Correction</label>
+                            <select id="eccLevelSelect">
+                                <option value="L" data-level="L">L (Low)</option>
+                                <option value="M" data-level="M" selected>M (Medium)</option>
+                                <option value="Q" data-level="Q">Q (Quartile)</option>
+                                <option value="H" data-level="H">H (High)</option>
+                            </select>
+                        </div>
+                        <div class="option-hint" id="optionHint">Typing auto-generates a preview when URL is valid.</div>
+                    </div>
+                    <div class="error-message" id="errorMessage"></div>
+                </div>
+            </div>
+
+            <div class="qr-section" id="qrSection" style="display: none;">
+                <div class="qr-container">
+                    <div class="qr-code-wrapper">
+                        <div id="qrCanvas" class="qr-canvas"></div>
+                    </div>
+                    <div class="qr-info">
+                        <h3 class="qr-title" id="qrTitle">Your QR Code</h3>
+                        <p class="qr-description" id="qrDesc">Scan this QR code with your phone's camera or any QR code scanner app</p>
+                        <div class="qr-actions">
+                            <button id="downloadBtn" class="action-btn download-btn">
+                                <span class="btn-icon">⬇️</span>
+                                <span id="downloadText">Download PNG</span>
+                            </button>
+                            <button id="copyImageBtn" class="action-btn copy-img-btn" title="Copy QR image to clipboard">
+                                <span class="btn-icon">🖼️</span>
+                                <span id="copyImageText">Copy Image</span>
+                            </button>
+                            <button id="copyBtn" class="action-btn copy-btn">
+                                <span class="btn-icon">📋</span>
+                                <span id="copyUrlText">Copy URL</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3 id="feat1Title">Instant Generation</h3>
+                    <p id="feat1Desc">Create QR codes in real-time as you type</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📱</div>
+                    <h3 id="feat2Title">Mobile Friendly</h3>
+                    <p id="feat2Desc">Optimized for all devices and screen sizes</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎨</div>
+                    <h3 id="feat3Title">High Quality</h3>
+                    <p id="feat3Desc">Crystal clear QR codes for easy scanning</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p id="footerText">&copy; 2024 URL to QR Code Converter. Built with ❤️</p>
+        </footer>
+    </div>
+
+    <!-- Load real working QRCode library -->
+    <script src="qrcode.min.js"></script>
+    <script>
+        // Ensure QRCode library is loaded before allowing interaction
+        window.qrCodeReady = false;
+        
+        function checkQRCodeLibrary() {
+            if (typeof QRCode !== 'undefined') {
+                window.qrCodeReady = true;
+                console.log('QRCode library loaded successfully');
+                // Enable the generate button
+                const generateBtn = document.getElementById('generateBtn');
+                if (generateBtn) {
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<span class="btn-text">Generate QR Code</span><span class="btn-icon">→</span>';
+                }
+                // Hide loading message if visible
+                const errorMessage = document.getElementById('errorMessage');
+                if (errorMessage && errorMessage.textContent.includes('loading')) {
+                    errorMessage.style.display = 'none';
+                }
+            } else {
+                console.log('QRCode library not yet loaded, retrying...');
+                setTimeout(checkQRCodeLibrary, 100);
+            }
+        }
+        
+        // Start checking for library
+        checkQRCodeLibrary();
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
